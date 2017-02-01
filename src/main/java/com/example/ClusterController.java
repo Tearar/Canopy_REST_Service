@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -31,7 +32,7 @@ public class ClusterController {
 	private static Instances newData;
 	private static String[] clusteringOptions;
 	private static String[] filteringOptions;
-	private static Canopy clusterer = new Canopy();
+	private static Canopy clusterer;
 	private static JSONSaver saver;
 	private static NumericToNominal convert;
 	private static AddCluster add;
@@ -39,8 +40,8 @@ public class ClusterController {
 	private static Cluster testCluster;
 	private static ArrayList<Cluster> cluster = new ArrayList<Cluster>();
 
-	@RequestMapping(value = "/cluster", method = RequestMethod.POST)
-	public ArrayList<Cluster> cluster(@RequestParam String name) throws Exception {
+	@RequestMapping(value = "/cluster")
+	public ClusterList cluster(@RequestBody RequestClass request) throws Exception {
 		
 		/*String test = "ident,dayOfWeek,weekOfYear,startingTime,endingTime,long,lat \n "
 				+ "Fussballtraining,0,0,18,20,49.085947,12.248254 \n "
@@ -49,10 +50,11 @@ public class ClusterController {
 				+ "Theaterprobe,1,0,15,19,47.085947,9.248254 \n "
 				+ "Theaterprobe,1,0,15,19,47.085947,9.248254 \n "
 				+ "Theaterprobe,1,0,15,19,47.085947,9.248254 \n"
-				+ "Theaterprobe,1,0,15,19,47.085947,9.248254"; */
+				+ "Theaterprobe,1,0,15,19,47.085947,9.248254"; */ 
 
-		System.out.println(name);
-		loadCSVFile(name);
+		
+		System.out.println(request.name);
+		loadCSVFile(request.name);
 		getInstancesFromCSV();
 		editCSVAttributes();
 		defineClusteringOptions();
@@ -91,8 +93,10 @@ public class ClusterController {
 		cluster.add(testCluster);
 		
 		}
+		ClusterList clusterList = new ClusterList();
+		clusterList.clusterList=cluster;
 		
-		return cluster;
+		return clusterList;
 
 
 		
@@ -133,7 +137,6 @@ public class ClusterController {
 	 */
 	private static void getInstancesFromCSV() throws IOException {
 		data = loader.getDataSet();
-
 	}
 
 	/* Method: editCSVAttributes() */
@@ -145,7 +148,7 @@ public class ClusterController {
 	private static void editCSVAttributes() throws Exception {
 		convert = new NumericToNominal();
 		defineFilteringOptions();
-		//applyFilter();
+		applyFilter();
 
 	}
 
@@ -196,7 +199,7 @@ public class ClusterController {
 	 * @throws Exception
 	 */
 	private static void executeClustering() throws Exception {
-	
+		clusterer = new Canopy();
 		clusterer.setOptions(clusteringOptions);
 		clusterer.buildClusterer(newData);
 
